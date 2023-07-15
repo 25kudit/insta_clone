@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:instaclone/resources/auth_methods.dart';
 import 'package:instaclone/utils/colors.dart';
+import 'package:instaclone/utils/utils.dart';
 import 'package:instaclone/widgets/text_field_input.dart';
 
 class signupScreen extends StatefulWidget {
@@ -16,6 +19,8 @@ class _signupScreenState extends State<signupScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
+  Uint8List? _image;
+  bool _signUpLoading = false;
 
   @override
   void dispose() {
@@ -24,6 +29,33 @@ class _signupScreenState extends State<signupScreen> {
     _passwordController.dispose();
     _bioController.dispose();
     _usernameController.dispose();
+  }
+
+  void selectImage() async {
+    Uint8List im = await pickImage(imageSource: ImageSource.gallery);
+    setState(() {
+      _image = im;
+    });
+  }
+
+  void signUpUser() async {
+    setState(() {
+      _signUpLoading = true;
+    });
+    String res = await AuthMethods().signUpUser(
+        email: _emailController.text,
+        username: _usernameController.text,
+        password: _passwordController.text,
+        bio: _bioController.text,
+        image: _image!);
+
+    if (res != 'success') {
+      customSnackBar(context: context, content: res);
+    }
+
+    setState(() {
+      _signUpLoading = false;
+    });
   }
 
   @override
@@ -51,15 +83,21 @@ class _signupScreenState extends State<signupScreen> {
               ),
               Stack(
                 children: [
-                  const CircleAvatar(
-                    radius: 64,
-                    backgroundImage: AssetImage('assets/images/ig_user.jpg'),
-                  ),
+                  _image == null
+                      ? const CircleAvatar(
+                          radius: 64,
+                          backgroundImage:
+                              AssetImage('assets/images/ig_user.jpg'),
+                        )
+                      : CircleAvatar(
+                          radius: 64,
+                          backgroundImage: MemoryImage(_image!),
+                        ),
                   Positioned(
                     bottom: -10,
                     left: 80,
                     child: IconButton(
-                      onPressed: () {},
+                      onPressed: selectImage,
                       icon: const Icon(Icons.add_a_photo),
                     ),
                   )
@@ -99,24 +137,27 @@ class _signupScreenState extends State<signupScreen> {
                 height: 32,
               ),
               InkWell(
-                onTap: () async {
-                  AuthMthods().signUpUser(
-                      email: _emailController.text,
-                      username: _usernameController.text,
-                      password: _passwordController.text,
-                      bio: _bioController.text);
-                },
+                onTap: signUpUser,
                 child: Container(
                   width: double.infinity,
+                  height: 44,
                   alignment: Alignment.center,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
                       shape: BoxShape.rectangle,
                       borderRadius: BorderRadius.circular(4),
                       color: blueColor),
-                  child: const Text(
-                    'Sign up',
-                  ),
+                  child: _signUpLoading
+                      ? const Center(
+                          child: SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                  color: primaryColor)),
+                        )
+                      : const Text(
+                          'Sign up',
+                        ),
                 ),
               ),
               const SizedBox(
