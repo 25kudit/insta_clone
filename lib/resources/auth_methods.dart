@@ -7,8 +7,8 @@ import 'package:instaclone/resources/storage_mathods.dart';
 class AuthMethods {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  //for user signup
 
+  //for user signup
   Future<String> signUpUser({
     required String email,
     required String username,
@@ -25,7 +25,6 @@ class AuthMethods {
         UserCredential cred = await _auth.createUserWithEmailAndPassword(
             email: email, password: password);
 
-
         final profilePicURL = await storageMethods().uploadImageToStorage(
             childName: 'profilePics', img: image, ispost: false);
 
@@ -40,11 +39,29 @@ class AuthMethods {
         });
 
         res = 'success';
-        print(res + ' ' +cred.user!.uid);
+        print(res + ' ' + cred.user!.uid);
       }
     } catch (err) {
       res = err.toString();
       print("hi error $res");
+    }
+    return res;
+  }
+
+  //login user
+  Future<String> signinUser({required String email, required String password}) async {
+    String res = "an error occured";
+    try {
+      if (email.isNotEmpty || password.isNotEmpty) {
+        await _auth.signInWithEmailAndPassword(
+            email: email, password: password);
+
+        res = "success";
+      } else {
+        res = "enter all the fields";
+      }
+    } catch (err) {
+      res = err.toString();
     }
     return res;
   }
